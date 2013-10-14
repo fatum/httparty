@@ -233,6 +233,12 @@ module HTTParty
       end
     end
 
+    def max_content_length(length = nil)
+      if !length.nil?
+        default_options[:max_content_length] = length
+      end
+    end
+
     # Declare whether or not to follow redirects.  When true, an
     # {HTTParty::RedirectionTooDeep} error will raise upon encountering a
     # redirect. You can then gain access to the response object via

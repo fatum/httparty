@@ -91,16 +91,30 @@ module HTTParty
       chunked_body = nil
 
       self.last_response = http.request(@raw_request) do |http_response|
-        if block
-          chunks = []
+        content_length = http_response['content-length']
 
-          http_response.read_body do |fragment|
-            chunks << fragment
-            block.call(fragment)
+        if content_length &&
+          options[:max_content_length] &&
+          content_length.size > options[:max_content_length]
+
+          raise 'Max Body Size reached'
+        end
+
+        chunks = []
+        body_length = 0
+
+        http_response.read_body do |fragment|
+          body_length =+ fragment.length
+
+          if options[:max_content_length] && body_length > options[:max_content_length]
+            raise 'Max Body Size reached'
           end
 
-          chunked_body = chunks.join
+          chunks << fragment
+          block.call(fragment) if block
         end
+
+        chunked_body = chunks.join
       end
 
       handle_deflation unless http_method == Net::HTTP::Head
